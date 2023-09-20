@@ -1,10 +1,11 @@
 const express = require("express");
+
 const app = express();
 const router = express.Router();
 const mongoose = require("mongoose");
 const userRoutes = require("./routes/users");
 const itemRoutes = require("./routes/clothingItems");
-const { likeItem, dislikeItem } = require("./controllers/clothingItems");
+
 const { PORT = 3001 } = process.env;
 
 app.use(express.json());
@@ -18,7 +19,7 @@ app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
 
-//Temporary authorization
+// Temporary authorization
 app.use((req, res, next) => {
   req.user = {
     _id: "65089e0e309ffab9c8b45c80",
@@ -26,14 +27,13 @@ app.use((req, res, next) => {
   next();
 });
 
-//Likes
-router.put("/items/:itemId/likes", likeItem);
-router.delete("/items/:itemId/likes", dislikeItem);
-
-//User Routes
+// User Routes
 app.use(userRoutes);
 
-//ClothingItems
+// ClothingItems
 app.use(itemRoutes);
 
-//
+// Middleware
+router.use((req, res) => {
+  res.status(404).json({ message: "Requested resource not found" });
+});

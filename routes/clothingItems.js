@@ -1,7 +1,10 @@
 const express = require("express");
+
 const router = express.Router();
 const {
   getItems,
+  likeItem,
+  dislikeItem,
   createItem,
   deleteItem,
 } = require("../controllers/clothingItems");
@@ -15,8 +18,8 @@ router.post("/items", createItem);
 // Route to delete a clothing item by _id
 router.delete("/items/:itemId", deleteItem);
 
-//Middleware
-router.use((req, res) => {
-  res.status(404).json({ message: "Requested resource not found" });
-});
+// Likes
+router.put("/items/:itemId/likes", likeItem);
+router.delete("/items/:itemId/likes", dislikeItem);
+
 module.exports = router;

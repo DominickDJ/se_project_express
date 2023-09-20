@@ -1,14 +1,15 @@
 const { ClothingItem } = require("../models/clothingItem");
-const { User } = require("../models/user");
-const { NOT_FOUND, SERVER_ERROR } = require("../utils/errors");
+const { NOT_FOUND, SERVER_ERROR, BAD_REQUEST } = require("../utils/errors");
 
 // Controller to get all clothing items
 const getItems = async (req, res) => {
   try {
     const items = await ClothingItem.find();
     res.json(items);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch clothing items" });
+  } catch (message) {
+    res
+      .status(SERVER_ERROR)
+      .json({ message: "Failed to fetch clothing items" });
   }
 };
 
@@ -16,25 +17,24 @@ const getItems = async (req, res) => {
 const createItem = async (req, res) => {
   console.log(req.user._id);
   const { name, weather, imageUrl } = req.body;
-  const { userId } = req.user;
 
   try {
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
     const item = await ClothingItem.create({
       name,
       weather,
       imageUrl,
-      owner: user._id,
     });
 
     res.status(201).json(item);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to create clothing item" });
+  } catch (message) {
+    if (message.name === "ValidationError") {
+      return res.status(BAD_REQUEST).json({ message: "Invalid data" });
+    }
+    res
+      .status(SERVER_ERROR)
+      .json({ message: "Failed to create clothing item" });
   }
+  return createItem;
 };
 
 // Controller to delete a clothing item by _id
@@ -43,16 +43,20 @@ const deleteItem = async (req, res) => {
   try {
     const deletedItem = await ClothingItem.findByIdAndRemove(itemId);
     if (!deletedItem) {
-      return res.status(404).json({ error: "Item not found" });
+      return res.status(NOT_FOUND).json({ message: "Item not found" });
     }
     res.json(deletedItem);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to delete clothing item" });
+  } catch (err) {
+    if (err.name === "CastError") {
+      return res.status(BAD_REQUEST).json({ message: "Invalid item ID" });
+    }
+    res
+      .status(SERVER_ERROR)
+      .json({ message: "Failed to delete clothing item" });
   }
+  return deleteItem;
 };
-
-//Like/Dislike Controllers
-
+// Like/Dislike Controllers
 const likeItem = (req, res) => {
   ClothingItem.findByIdAndUpdate(
     req.params.itemId,
@@ -71,12 +75,15 @@ const likeItem = (req, res) => {
       console.error(
         `Error ${error.name} with the message ${error.message} has occurred while executing the code`,
       );
+      const errorMessage =
+        error.statusCode === NOT_FOUND
+          ? "Item not found"
+          : "An error has occurred on the server.";
       res
         .status(error.statusCode || SERVER_ERROR)
-        .json({ message: error.message });
+        .json({ message: errorMessage });
     });
 };
-
 const dislikeItem = (req, res) => {
   ClothingItem.findByIdAndUpdate(
     req.params.itemId,
@@ -95,9 +102,13 @@ const dislikeItem = (req, res) => {
       console.error(
         `Error ${error.name} with the message ${error.message} has occurred while executing the code`,
       );
+      const errorMessage =
+        error.statusCode === NOT_FOUND
+          ? "Item not found"
+          : "An error has occurred on the server.";
       res
         .status(error.statusCode || SERVER_ERROR)
-        .json({ message: error.message });
+        .json({ message: errorMessage });
     });
 };
 module.exports = { getItems, createItem, deleteItem, dislikeItem, likeItem };
