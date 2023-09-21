@@ -34,11 +34,11 @@ const createUser = async (req, res) => {
   try {
     const user = await User.create({ name, avatar });
     res.status(201).json(user);
-  } catch (message) {
-    if (message.name === "ValidationError") {
+  } catch (error) {
+    if (error.name === "ValidationError") {
       res.status(BAD_REQUEST).json({ message: "Invalid data" });
-      res.status(SERVER_ERROR).json({ message: "Failed to create user" });
     }
+    res.status(SERVER_ERROR).json({ message: "Failed to create user" });
   }
 };
 module.exports = { getUsers, getUser, createUser };
