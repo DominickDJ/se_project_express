@@ -23,6 +23,7 @@ const createItem = async (req, res) => {
       name,
       weather,
       imageUrl,
+      owner: req.user._id,
     });
 
     res.status(201).json(item);
@@ -72,6 +73,9 @@ const likeItem = (req, res) => {
       res.json(updatedItem);
     })
     .catch((error) => {
+      if (error.name === "CastError") {
+        return res.status(BAD_REQUEST).json({ message: "Invalid item ID" });
+      }
       console.error(
         `Error ${error.name} with the message ${error.message} has occurred while executing the code`,
       );
@@ -79,7 +83,7 @@ const likeItem = (req, res) => {
         error.statusCode === NOT_FOUND
           ? "Item not found"
           : "An error has occurred on the server.";
-      res
+      return res
         .status(error.statusCode || SERVER_ERROR)
         .json({ message: errorMessage });
     });
@@ -99,6 +103,9 @@ const dislikeItem = (req, res) => {
       res.json(updatedItem);
     })
     .catch((error) => {
+      if (error.name === "CastError") {
+        return res.status(BAD_REQUEST).json({ message: "Invalid item ID" });
+      }
       console.error(
         `Error ${error.name} with the message ${error.message} has occurred while executing the code`,
       );
@@ -106,7 +113,7 @@ const dislikeItem = (req, res) => {
         error.statusCode === NOT_FOUND
           ? "Item not found"
           : "An error has occurred on the server.";
-      res
+      return res
         .status(error.statusCode || SERVER_ERROR)
         .json({ message: errorMessage });
     });

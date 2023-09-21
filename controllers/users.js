@@ -19,14 +19,13 @@ const getUser = async (req, res) => {
     if (!user) {
       return res.status(NOT_FOUND).json({ message: "User not found" });
     }
-    res.json(user);
+    return res.json(user);
   } catch (err) {
     if (err.name === "CastError") {
       return res.status(BAD_REQUEST).json({ message: "Invalid user ID" });
     }
-    res.status(SERVER_ERROR).json({ message: "Failed to fetch user" });
+    return res.status(SERVER_ERROR).json({ message: "Failed to fetch user" });
   }
-  return getUser;
 };
 
 // Controller to create a new user
@@ -36,8 +35,10 @@ const createUser = async (req, res) => {
     const user = await User.create({ name, avatar });
     res.status(201).json(user);
   } catch (message) {
-    res.status(SERVER_ERROR).json({ message: "Failed to create user" });
+    if (message.name === "ValidationError") {
+      res.status(BAD_REQUEST).json({ message: "Invalid data" });
+      res.status(SERVER_ERROR).json({ message: "Failed to create user" });
+    }
   }
 };
-
 module.exports = { getUsers, getUser, createUser };
