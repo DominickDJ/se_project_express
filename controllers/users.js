@@ -1,5 +1,64 @@
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 const { User } = require("../models/user");
-const { SERVER_ERROR, BAD_REQUEST, NOT_FOUND } = require("../utils/errors");
+const {
+  SERVER_ERROR,
+  BAD_REQUEST,
+  NOT_FOUND,
+  CONFLICT,
+} = require("../utils/errors");
+
+const { JWT_SECRET } = require("../utils/config");
+
+// Controller to Login
+const login = async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    // Find the user by email
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+    // Compare the provided password with the stored password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+    // Create a JSON Web Token (JWT) and Send the JWT to the client
+    const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
+      expiresIn: "7d",
+    });
+    return res.json({ token });
+  } catch (error) {
+    return res
+      .status(SERVER_ERROR)
+      .json({ message: "Failed to authenticate user" });
+  }
+};
+// Controller to update new user profile
+const updateProfile = async (req, res) => {
+  try {
+    // Get the user ID from the request object
+    const { _id } = req.user;
+    // Find the user in the database based on the ID
+    const user = await User.findById(_id);
+    if (!user) {
+      return res.status(NOT_FOUND).json({ message: "User not found" });
+    }
+    // Update the user's profile with the new data
+    user.name = req.body.name;
+    user.email = req.body.email;
+    // Save the updated user in the database & return response
+    await user.save();
+    return res.json(user);
+  } catch (error) {
+    if (error.name === "ValidationError") {
+      // Handle validation errors
+      return res.status(BAD_REQUEST).json({ message: error.message });
+    }
+    return res.status(SERVER_ERROR).json({ message: "Server error" });
+  }
+};
 
 // Controller to get all users
 const getUsers = async (req, res) => {
@@ -28,17 +87,59 @@ const getUser = async (req, res) => {
   }
 };
 
-// Controller to create a new user
-const createUser = async (req, res) => {
-  const { name, avatar } = req.body;
+const getCurrentUser = async (req, res) => {
   try {
-    const user = await User.create({ name, avatar });
-    res.status(201).json(user);
-  } catch (error) {
-    if (error.name === "ValidationError") {
-      res.status(BAD_REQUEST).json({ message: "Invalid data" });
+    // Get the user ID from the request object
+    const { _id } = req.user;
+    // Find by id
+    const user = await User.findById(_id);
+    if (!user) {
+      return res.status(NOT_FOUND).json({ message: "User not found" });
     }
-    res.status(SERVER_ERROR).json({ message: "Failed to create user" });
+    // Return the user data
+    return res.json(user);
+  } catch (error) {
+    // Handle any errors that occur during the controller execution
+    return res.status(SERVER_ERROR).json({ message: "Server error" });
   }
 };
-module.exports = { getUsers, getUser, createUser };
+// Controller to create a new user
+const createUser = async (req, res) => {
+  const { name, avatar, email, password } = req.body;
+  try {
+    // Check if there's already an existing user with the same email
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res
+        .status(CONFLICT)
+        .json({ message: "User with this email already exists" });
+    }
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    // Create the user
+    const user = await User.create({
+      name,
+      avatar,
+      email,
+      password: hashedPassword,
+    });
+
+    return res.status(201).json(user);
+  } catch (error) {
+    if (error.code === 11000) {
+      throw new Error("User with this email already exists");
+    } else {
+      return res
+        .status(SERVER_ERROR)
+        .json({ message: "Failed to create user" });
+    }
+  }
+};
+module.exports = {
+  getUsers,
+  getUser,
+  createUser,
+  login,
+  getCurrentUser,
+  updateProfile,
+};

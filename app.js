@@ -1,14 +1,16 @@
 const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
 
 const app = express();
-const mongoose = require("mongoose");
+
 const userRoutes = require("./routes/users");
 const itemRoutes = require("./routes/clothingItems");
 
 const { PORT = 3001 } = process.env;
 
 app.use(express.json());
-
+app.use(cors());
 mongoose.connect("mongodb://127.0.0.1:27017/wtwr_db", {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -16,14 +18,6 @@ mongoose.connect("mongodb://127.0.0.1:27017/wtwr_db", {
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
-});
-
-// Temporary authorization
-app.use((req, res, next) => {
-  req.user = {
-    _id: "65089e0e309ffab9c8b45c80",
-  };
-  next();
 });
 
 // User Routes
