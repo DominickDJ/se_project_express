@@ -8,9 +8,12 @@ const {
   createItem,
   deleteItem,
 } = require("../controllers/clothingItems");
+const authMiddleware = require("../middlewares/auth");
 
 // Route to get all clothing items
 router.get("/items", getItems);
+
+router.use(authMiddleware);
 
 // Route to create a new clothing item
 router.post("/items", createItem);

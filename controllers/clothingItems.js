@@ -31,16 +31,15 @@ const createItem = async (req, res) => {
       owner: req.user._id,
     });
 
-    res.status(201).json(item);
+    return res.status(201).json(item);
   } catch (message) {
     if (message.name === "ValidationError") {
       return res.status(BAD_REQUEST).json({ message: "Invalid data" });
     }
-    res
+    return res
       .status(SERVER_ERROR)
       .json({ message: "Failed to create clothing item" });
   }
-  return createItem;
 };
 
 // Controller to delete a clothing item by _id

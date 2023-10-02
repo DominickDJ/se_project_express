@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const { User } = require("../models/user");
 const {
   SERVER_ERROR,
+  UNAUTHORIZED,
   BAD_REQUEST,
   NOT_FOUND,
   CONFLICT,
@@ -15,14 +16,18 @@ const login = async (req, res) => {
   const { email, password } = req.body;
   try {
     // Find the user by email
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select("+password");
     if (!user) {
-      return res.status(401).json({ message: "Invalid email or password" });
+      return res
+        .status(UNAUTHORIZED)
+        .json({ message: "Invalid email or password" });
     }
     // Compare the provided password with the stored password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return res.status(401).json({ message: "Invalid email or password" });
+      return res
+        .status(UNAUTHORIZED)
+        .json({ message: "Invalid email or password" });
     }
     // Create a JSON Web Token (JWT) and Send the JWT to the client
     const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
@@ -35,6 +40,7 @@ const login = async (req, res) => {
       .json({ message: "Failed to authenticate user" });
   }
 };
+
 // Controller to update new user profile
 const updateProfile = async (req, res) => {
   try {
@@ -47,7 +53,7 @@ const updateProfile = async (req, res) => {
     }
     // Update the user's profile with the new data
     user.name = req.body.name;
-    user.email = req.body.email;
+    user.avatar = req.body.avatar;
     // Save the updated user in the database & return response
     await user.save();
     return res.json(user);
@@ -70,23 +76,6 @@ const getUsers = async (req, res) => {
   }
 };
 
-// Controller to get a user by _id
-const getUser = async (req, res) => {
-  const { userId } = req.params;
-  try {
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(NOT_FOUND).json({ message: "User not found" });
-    }
-    return res.json(user);
-  } catch (err) {
-    if (err.name === "CastError") {
-      return res.status(BAD_REQUEST).json({ message: "Invalid user ID" });
-    }
-    return res.status(SERVER_ERROR).json({ message: "Failed to fetch user" });
-  }
-};
-
 const getCurrentUser = async (req, res) => {
   try {
     // Get the user ID from the request object
@@ -103,6 +92,7 @@ const getCurrentUser = async (req, res) => {
     return res.status(SERVER_ERROR).json({ message: "Server error" });
   }
 };
+
 // Controller to create a new user
 const createUser = async (req, res) => {
   const { name, avatar, email, password } = req.body;
@@ -123,21 +113,28 @@ const createUser = async (req, res) => {
       email,
       password: hashedPassword,
     });
-
-    return res.status(201).json(user);
+    const userResponse = {
+      _id: user._id,
+      name: user.name,
+      avatar: user.avatar,
+      email: user.email,
+    };
+    return res.status(201).json(userResponse);
   } catch (error) {
-    if (error.code === 11000) {
-      throw new Error("User with this email already exists");
-    } else {
-      return res
-        .status(SERVER_ERROR)
-        .json({ message: "Failed to create user" });
+    if (error.name === "ValidationError") {
+      return res.status(BAD_REQUEST).json({ message: error.message });
     }
+    if (error.code === 11000) {
+      return res
+        .status(CONFLICT)
+        .json({ message: "User with this email already exists" });
+    }
+    return res.status(SERVER_ERROR).json({ message: "Failed to create user" });
   }
 };
+
 module.exports = {
   getUsers,
-  getUser,
   createUser,
   login,
   getCurrentUser,

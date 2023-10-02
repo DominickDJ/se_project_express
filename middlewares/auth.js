@@ -4,20 +4,6 @@ const { UNAUTHORIZED } = require("../utils/errors");
 
 const authMiddleware = (req, res, next) => {
   const { authorization } = req.headers;
-  const { method, path } = req;
-
-  // Exclude specific routes from authentication
-  const excludedRoutes = [
-    { method: "POST", path: "/signin" },
-    { method: "POST", path: "/signup" },
-    { method: "GET", path: "/items" },
-  ];
-  const isExcludedRoute = excludedRoutes.some(
-    (route) => route.method === method && route.path === path,
-  );
-  if (isExcludedRoute) {
-    return next();
-  }
   // Check if the authorization header is present
   if (!authorization || !authorization.startsWith("Bearer ")) {
     return res.status(UNAUTHORIZED).json({ message: "Unauthorized" });
@@ -32,6 +18,7 @@ const authMiddleware = (req, res, next) => {
   } catch (error) {
     return res.status(UNAUTHORIZED).json({ message: "Unauthorized" });
   }
+  return undefined;
 };
 
 module.exports = authMiddleware;
