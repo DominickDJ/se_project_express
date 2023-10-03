@@ -4,7 +4,7 @@ const { getCurrentUser, updateProfile } = require("../controllers/users");
 
 const router = express.Router();
 
-router.get("./users/me", authMiddleware, getCurrentUser);
-router.patch("./users/me", authMiddleware, updateProfile);
+router.get("/users/me", authMiddleware, getCurrentUser);
+router.patch("/users/me", authMiddleware, updateProfile);
 
 module.exports = router;

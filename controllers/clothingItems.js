@@ -3,7 +3,7 @@ const {
   NOT_FOUND,
   SERVER_ERROR,
   BAD_REQUEST,
-  UNAUTHORIZED,
+  FORBIDDEN,
 } = require("../utils/errors");
 
 // Controller to get all clothing items
@@ -55,7 +55,7 @@ const deleteItem = async (req, res) => {
     if (item.owner.toString() !== _id) {
       // If the owner's _id is not the same as the logged-in user's _id, return a 403 error
       return res
-        .status(UNAUTHORIZED)
+        .status(FORBIDDEN)
         .json({ message: "You are not authorized to delete this item" });
     }
     // Delete the item from the database and return response

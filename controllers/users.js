@@ -120,6 +120,7 @@ const createUser = async (req, res) => {
       email: user.email,
     };
     return res.status(201).json(userResponse);
+    // Handle any errors that occur during the controller execution
   } catch (error) {
     if (error.name === "ValidationError") {
       return res.status(BAD_REQUEST).json({ message: error.message });

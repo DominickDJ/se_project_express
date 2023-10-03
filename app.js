@@ -32,13 +32,10 @@ app.use(helmet());
 // Rate limit
 app.use(limiter);
 
-// User Routes
-app.use(routes);
-
-// ClothingItems
+// User and Clothing Items Routes
 app.use(routes);
 
 // Middleware
-app.use((res) => {
+app.use((req, res) => {
   res.status(NOT_FOUND).json({ message: "Requested resource not found" });
 });
