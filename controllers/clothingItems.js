@@ -9,33 +9,35 @@ const {
 // Controller to get all clothing items
 const getItems = async (req, res) => {
   try {
-    const items = await ClothingItem.find();
-    res.json(items);
+    const items = await ClothingItem.find(); // Retrieve all clothing items from the database
+    res.json(items); // Send the retrieved clothing items as a JSON response
   } catch (message) {
     res
       .status(SERVER_ERROR)
-      .json({ message: "Failed to fetch clothing items" });
+      .json({ message: "Failed to fetch clothing items" }); // If there is an error, send a server error response
   }
 };
 
 // Controller to create a new clothing item
 const createItem = async (req, res) => {
-  console.log(req.user._id);
-  const { name, weather, imageUrl } = req.body;
+  console.log(req.user._id); // Log the user ID from the request object
+  const { name, weather, imageUrl } = req.body; // Destructure the name, weather, and imageUrl from the request body
 
   try {
     const item = await ClothingItem.create({
       name,
       weather,
       imageUrl,
-      owner: req.user._id,
+      owner: req.user._id, // Set the owner of the item as the user ID from the request object
     });
 
-    return res.status(201).json(item);
+    return res.status(201).json(item); // If the item is successfully created, send a success response with the created item
   } catch (message) {
     if (message.name === "ValidationError") {
+      // If there is a validation error, send a bad request response
       return res.status(BAD_REQUEST).json({ message: "Invalid data" });
     }
+    // If there is any other error, send a server error response
     return res
       .status(SERVER_ERROR)
       .json({ message: "Failed to create clothing item" });
@@ -78,15 +80,18 @@ const likeItem = (req, res) => {
     { new: true },
   )
     .orFail(() => {
+      // If the item ID is not found, throw an error
       const error = new Error("Item ID not found");
       error.statusCode = NOT_FOUND;
       throw error;
     })
     .then((updatedItem) => {
+      // If the item is successfully updated, send the updated item as a response
       res.json(updatedItem);
     })
     .catch((error) => {
       if (error.name === "CastError") {
+        // If there is a casting error (e.g., invalid item ID), send a bad request response
         return res.status(BAD_REQUEST).json({ message: "Invalid item ID" });
       }
       console.error(
@@ -96,11 +101,13 @@ const likeItem = (req, res) => {
         error.statusCode === NOT_FOUND
           ? "Item not found"
           : "An error has occurred on the server.";
+      // Send an appropriate error response based on the error status code or a default server error response
       return res
         .status(error.statusCode || SERVER_ERROR)
         .json({ message: errorMessage });
     });
 };
+
 const dislikeItem = (req, res) => {
   ClothingItem.findByIdAndUpdate(
     req.params.itemId,
@@ -108,15 +115,18 @@ const dislikeItem = (req, res) => {
     { new: true },
   )
     .orFail(() => {
+      // If the item ID is not found, throw an error
       const error = new Error("Item ID not found");
       error.statusCode = NOT_FOUND;
       throw error;
     })
     .then((updatedItem) => {
+      // If the item is successfully updated, send the updated item as a response
       res.json(updatedItem);
     })
     .catch((error) => {
       if (error.name === "CastError") {
+        // If there is a casting error (e.g., invalid item ID), send a bad request response
         return res.status(BAD_REQUEST).json({ message: "Invalid item ID" });
       }
       console.error(
@@ -126,9 +136,11 @@ const dislikeItem = (req, res) => {
         error.statusCode === NOT_FOUND
           ? "Item not found"
           : "An error has occurred on the server.";
+      // Send an appropriate error response based on the error status code or a default server error response
       return res
         .status(error.statusCode || SERVER_ERROR)
         .json({ message: errorMessage });
     });
 };
+
 module.exports = { getItems, createItem, deleteItem, dislikeItem, likeItem };

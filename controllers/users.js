@@ -100,6 +100,7 @@ const createUser = async (req, res) => {
     // Check if there's already an existing user with the same email
     const existingUser = await User.findOne({ email });
     if (existingUser) {
+      // If user already exists return 409 error
       return res
         .status(CONFLICT)
         .json({ message: "User with this email already exists" });

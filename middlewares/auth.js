@@ -11,10 +11,11 @@ const authMiddleware = (req, res, next) => {
   // Extract the token from the authorization header
   const token = authorization.replace("Bearer ", "");
   try {
-    // Verify the token and extract the payload/ return response
+    // Verify the token and extract the payload
     const payload = jwt.verify(token, JWT_SECRET);
     req.user = payload;
     next();
+    // Catch error and return response
   } catch (error) {
     return res.status(UNAUTHORIZED).json({ message: "Unauthorized" });
   }
