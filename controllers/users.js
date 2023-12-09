@@ -2,32 +2,28 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { User } = require("../models/user");
 const {
-  SERVER_ERROR,
-  UNAUTHORIZED,
-  BAD_REQUEST,
-  NOT_FOUND,
-  CONFLICT,
+  BadRequestError,
+  UnauthorizedError,
+  ForbiddenError,
+  NotFoundError,
+  ConflictError,
+  ServerError,
 } = require("../utils/errors");
 
 const { JWT_SECRET } = require("../utils/config");
 
-// Controller to Login
-const login = async (req, res) => {
+const login = async (req, res, next) => {
   const { email, password } = req.body;
   try {
     // Find the user by email
     const user = await User.findOne({ email }).select("+password");
     if (!user) {
-      return res
-        .status(UNAUTHORIZED)
-        .json({ message: "Invalid email or password" });
+      throw new UnauthorizedError("Invalid email or password");
     }
     // Compare the provided password with the stored password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return res
-        .status(UNAUTHORIZED)
-        .json({ message: "Invalid email or password" });
+      throw new UnauthorizedError("Invalid email or password");
     }
     // Create a JSON Web Token (JWT) and Send the JWT to the client
     const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
@@ -35,21 +31,23 @@ const login = async (req, res) => {
     });
     return res.json({ token });
   } catch (error) {
-    return res
-      .status(SERVER_ERROR)
-      .json({ message: "Failed to authenticate user" });
+    if (error.name === "CastError") {
+      next(new BadRequestError("The id string is in an invalid format"));
+    } else {
+      next(error);
+    }
   }
 };
 
 // Controller to update new user profile
-const updateProfile = async (req, res) => {
+const updateProfile = async (req, res, next) => {
   try {
     // Get the user ID from the request object
     const { _id } = req.user;
     // Find the user in the database based on the ID
     const user = await User.findById(_id);
     if (!user) {
-      return res.status(NOT_FOUND).json({ message: "User not found" });
+      throw new NotFoundError("User not found");
     }
     // Update the user's profile with the new data
     user.name = req.body.name;
@@ -60,19 +58,21 @@ const updateProfile = async (req, res) => {
   } catch (error) {
     if (error.name === "ValidationError") {
       // Handle validation errors
-      return res.status(BAD_REQUEST).json({ message: error.message });
+      next(new BadRequestError(error.message));
+    } else {
+      next(new ServerError("Server error"));
     }
-    return res.status(SERVER_ERROR).json({ message: "Server error" });
   }
 };
-
 // Controller to get all users
 const getUsers = async (req, res) => {
   try {
     const users = await User.find();
     res.json(users);
-  } catch (message) {
-    res.status(SERVER_ERROR).json({ message: "Failed to fetch users" });
+  } catch (error) {
+    if (error.name == "Server error") {
+      next(new ServerError("Server error"));
+    }
   }
 };
 
@@ -83,13 +83,14 @@ const getCurrentUser = async (req, res) => {
     // Find by id
     const user = await User.findById(_id);
     if (!user) {
-      return res.status(NOT_FOUND).json({ message: "User not found" });
+      throw new NotFoundError("User not found");
     }
     // Return the user data
     return res.json(user);
   } catch (error) {
-    // Handle any errors that occur during the controller execution
-    return res.status(SERVER_ERROR).json({ message: "Server error" });
+    if (error.name == "Server error") {
+      next(new ServerError("Server error"));
+    }
   }
 };
 
@@ -100,10 +101,7 @@ const createUser = async (req, res) => {
     // Check if there's already an existing user with the same email
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      // If user already exists return 409 error
-      return res
-        .status(CONFLICT)
-        .json({ message: "User with this email already exists" });
+      throw new ConflictError("User with this email already exists");
     }
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -124,14 +122,12 @@ const createUser = async (req, res) => {
     // Handle any errors that occur during the controller execution
   } catch (error) {
     if (error.name === "ValidationError") {
-      return res.status(BAD_REQUEST).json({ message: error.message });
+      next(new BadRequestError(error.message));
+    } else if (error.code === 11000) {
+      next(new ConflictError("User with this email already exists"));
+    } else {
+      next(new ServerError("Failed to create user"));
     }
-    if (error.code === 11000) {
-      return res
-        .status(CONFLICT)
-        .json({ message: "User with this email already exists" });
-    }
-    return res.status(SERVER_ERROR).json({ message: "Failed to create user" });
   }
 };
 

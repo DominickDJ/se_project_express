@@ -1,9 +1,11 @@
 const { ClothingItem } = require("../models/clothingItem");
 const {
-  NOT_FOUND,
-  SERVER_ERROR,
-  BAD_REQUEST,
-  FORBIDDEN,
+  BadRequestError,
+  UnauthorizedError,
+  ForbiddenError,
+  NotFoundError,
+  ConflictError,
+  ServerError,
 } = require("../utils/errors");
 
 // Controller to get all clothing items
@@ -11,10 +13,10 @@ const getItems = async (req, res) => {
   try {
     const items = await ClothingItem.find(); // Retrieve all clothing items from the database
     res.json(items); // Send the retrieved clothing items as a JSON response
-  } catch (message) {
-    res
-      .status(SERVER_ERROR)
-      .json({ message: "Failed to fetch clothing items" }); // If there is an error, send a server error response
+  } catch (error) {
+    if (error.name === "ServerError") {
+      next(new ServerError("Failed to fetch clothing items"));
+    }
   }
 };
 
@@ -34,13 +36,10 @@ const createItem = async (req, res) => {
     return res.status(201).json(item); // If the item is successfully created, send a success response with the created item
   } catch (message) {
     if (message.name === "ValidationError") {
-      // If there is a validation error, send a bad request response
-      return res.status(BAD_REQUEST).json({ message: "Invalid data" });
+      next(new BadRequestError("Invalid data"));
+    } else {
+      next(new ServerError("Failed to create clothing item"));
     }
-    // If there is any other error, send a server error response
-    return res
-      .status(SERVER_ERROR)
-      .json({ message: "Failed to create clothing item" });
   }
 };
 
@@ -51,27 +50,25 @@ const deleteItem = async (req, res) => {
   try {
     const item = await ClothingItem.findById(itemId);
     if (!item) {
-      return res.status(NOT_FOUND).json({ message: "Item not found" });
+      throw new NotFoundError("Item not Found");
     }
     // Check if the logged-in user is the owner of the item
     if (item.owner.toString() !== _id) {
       // If the owner's _id is not the same as the logged-in user's _id, return a 403 error
-      return res
-        .status(FORBIDDEN)
-        .json({ message: "You are not authorized to delete this item" });
+      throw new UnauthorizedError("You are not authorized to delete this item");
     }
     // Delete the item from the database and return response
     const deletedItem = await ClothingItem.findByIdAndRemove(itemId);
     return res.json(deletedItem);
   } catch (err) {
     if (err.name === "CastError") {
-      return res.status(BAD_REQUEST).json({ message: "Invalid item ID" });
+      next(new BadRequestError("Invalid item ID"));
+    } else {
+      next(new ServerError("Failed to delete clothing item"));
     }
-    return res
-      .status(SERVER_ERROR)
-      .json({ message: "Failed to delete clothing item" });
   }
 };
+
 // Like/Dislike Controllers
 const likeItem = (req, res) => {
   ClothingItem.findByIdAndUpdate(
@@ -91,7 +88,7 @@ const likeItem = (req, res) => {
     })
     .catch((error) => {
       if (error.name === "CastError") {
-        // If there is a casting error (e.g., invalid item ID), send a bad request response
+        // If there is a casting error, send a bad request response
         return res.status(BAD_REQUEST).json({ message: "Invalid item ID" });
       }
       console.error(

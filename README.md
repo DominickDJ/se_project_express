@@ -23,3 +23,6 @@ This is the back-end component of WTWR (What to Wear?), a project aimed at provi
 
 `npm run start` — to launch the server
 `npm run dev` — to launch the server with the hot reload feature
+
+**DOMAIN NAME**
+https://www.dominick.crabdance.com
