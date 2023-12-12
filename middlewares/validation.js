@@ -12,6 +12,7 @@ const validateClothingItem = celebrate({
         }
         return value;
       }),
+    weather: Joi.string().valid("hot", "warm", "cold").required(),
   }),
 });
 
@@ -28,6 +29,13 @@ const validateUserInfo = celebrate({
       }),
     email: Joi.string().email().required(),
     password: Joi.string().required(),
+  }),
+});
+
+const validateProfileUpdate = celebrate({
+  body: Joi.object({
+    name: Joi.string().min(2).max(30).required(),
+    avatar: Joi.string().uri().allow("").optional(),
   }),
 });
 
@@ -95,4 +103,5 @@ module.exports = {
   validateURL,
   validateCardBody,
   validateUserInfo,
+  validateProfileUpdate,
 };

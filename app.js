@@ -2,16 +2,17 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const helmet = require("helmet");
+const { errors } = require("celebrate");
 const limiter = require("./rateLimiter");
 const errorHandler = require("./middlewares/errorHandler");
-const { errors } = require("celebrate");
+
 const { requestLogger, errorLogger } = require("./middlewares/Logger");
 
 const app = express();
 
 const routes = require("./routes/index");
 
-const { NOT_FOUND } = require("./utils/errors");
+const { NOT_FOUND } = require("./utils/NotFoundError");
 
 const { PORT = 3001 } = process.env;
 

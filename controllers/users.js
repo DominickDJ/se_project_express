@@ -1,14 +1,11 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { User } = require("../models/user");
-const {
-  BadRequestError,
-  UnauthorizedError,
-  ForbiddenError,
-  NotFoundError,
-  ConflictError,
-  ServerError,
-} = require("../utils/errors");
+
+const { BadRequestError } = require("../utils/BadRequestError");
+const { UnauthorizedError } = require("../utils/UnauthorizedError");
+const { NotFoundError } = require("../utils/NotFoundError");
+const { ConflictError } = require("../utils/ConflictError");
 
 const { JWT_SECRET } = require("../utils/config");
 
@@ -31,12 +28,9 @@ const login = async (req, res, next) => {
     });
     return res.json({ token });
   } catch (error) {
-    if (error.name === "CastError") {
-      next(new BadRequestError("The id string is in an invalid format"));
-    } else {
-      next(error);
-    }
+    next(error);
   }
+  return undefined;
 };
 
 // Controller to update new user profile
@@ -60,23 +54,13 @@ const updateProfile = async (req, res, next) => {
       // Handle validation errors
       next(new BadRequestError(error.message));
     } else {
-      next(new ServerError("Server error"));
+      next(error);
     }
   }
-};
-// Controller to get all users
-const getUsers = async (req, res) => {
-  try {
-    const users = await User.find();
-    res.json(users);
-  } catch (error) {
-    if (error.name == "Server error") {
-      next(new ServerError("Server error"));
-    }
-  }
+  return undefined;
 };
 
-const getCurrentUser = async (req, res) => {
+const getCurrentUser = async (req, res, next) => {
   try {
     // Get the user ID from the request object
     const { _id } = req.user;
@@ -88,14 +72,13 @@ const getCurrentUser = async (req, res) => {
     // Return the user data
     return res.json(user);
   } catch (error) {
-    if (error.name == "Server error") {
-      next(new ServerError("Server error"));
-    }
+    next(error);
   }
+  return undefined;
 };
 
 // Controller to create a new user
-const createUser = async (req, res) => {
+const createUser = async (req, res, next) => {
   const { name, avatar, email, password } = req.body;
   try {
     // Check if there's already an existing user with the same email
@@ -126,13 +109,13 @@ const createUser = async (req, res) => {
     } else if (error.code === 11000) {
       next(new ConflictError("User with this email already exists"));
     } else {
-      next(new ServerError("Failed to create user"));
+      next(error);
     }
   }
+  return undefined;
 };
 
 module.exports = {
-  getUsers,
   createUser,
   login,
   getCurrentUser,

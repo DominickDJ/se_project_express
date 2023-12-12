@@ -1,6 +1,9 @@
 const express = require("express");
+const celebrate = require("celebrate");
 
 const router = express.Router();
+const authMiddleware = require("../middlewares/auth");
+
 const {
   getItems,
   likeItem,
@@ -8,7 +11,8 @@ const {
   createItem,
   deleteItem,
 } = require("../controllers/clothingItems");
-const authMiddleware = require("../middlewares/auth");
+
+const { validateClothingItem } = require("../middlewares/validation");
 
 // Route to get all clothing items
 router.get("/items", getItems);
@@ -16,7 +20,7 @@ router.get("/items", getItems);
 router.use(authMiddleware);
 
 // Route to create a new clothing item
-router.post("/items", createItem);
+router.post("/items", celebrate(validateClothingItem), createItem);
 
 // Route to delete a clothing item by _id
 router.delete("/items/:itemId", deleteItem);
