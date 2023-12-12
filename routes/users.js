@@ -1,5 +1,5 @@
 const express = require("express");
-const celebrate = require("celebrate");
+const { celebrate } = require("celebrate");
 
 const router = express.Router();
 const { updateProfile } = require("../controllers/users");
@@ -9,7 +9,7 @@ const { validateProfileUpdate } = require("../middlewares/validation");
 router.patch(
   "/users/me",
   authMiddleware,
-  celebrate(validateProfileUpdate),
+  celebrate({ body: validateProfileUpdate }),
   updateProfile,
 );
 
