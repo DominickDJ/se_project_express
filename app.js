@@ -12,7 +12,7 @@ const app = express();
 
 const routes = require("./routes/index");
 
-const { NOT_FOUND } = require("./utils/NotFoundError");
+const NotFoundError = require("./utils/NotFoundError");
 
 const { PORT = 3001 } = process.env;
 
@@ -52,8 +52,8 @@ app.get("/crash-test", () => {
 app.use(routes);
 
 // Middleware
-app.use((req, res) => {
-  res.status(NOT_FOUND).json({ message: "Requested resource not found" });
+app.use(() => {
+  throw new NotFoundError("Requested resource not found");
 });
 
 // Logger
