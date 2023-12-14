@@ -6,7 +6,7 @@ const { errors } = require("celebrate");
 const limiter = require("./rateLimiter");
 const errorHandler = require("./middlewares/errorHandler");
 
-const { requestLogger, errorLogger } = require("./middlewares/Logger");
+const { requestLogger, errorLogger } = require("./middlewares/logger");
 
 const app = express();
 
