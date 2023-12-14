@@ -1,8 +1,8 @@
 const { ClothingItem } = require("../models/clothingItem");
-const { BadRequestError } = require("../utils/BadRequestError");
-const { ForbiddenError } = require("../utils/ForbiddenError");
-const { NotFoundError } = require("../utils/NotFoundError");
-const { ServerError } = require("../utils/ServerError");
+const BadRequestError = require("../utils/BadRequestError");
+const ForbiddenError = require("../utils/ForbiddenError");
+const NotFoundError = require("../utils/NotFoundError");
+const ServerError = require("../utils/ServerError");
 
 // Controller to get all clothing items
 const getItems = async (req, res, next) => {

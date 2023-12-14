@@ -5,4 +5,4 @@ class ServerError extends Error {
     this.statusCode = 500;
   }
 }
-module.esports = ServerError;
+module.exports = ServerError;

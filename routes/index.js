@@ -1,5 +1,4 @@
 const express = require("express");
-const { celebrate } = require("celebrate");
 
 const items = require("./clothingItems");
 const users = require("./users");
@@ -13,8 +12,8 @@ const {
 } = require("../middlewares/validation");
 
 // Handlers
-router.post("/signin", celebrate({ body: validateAuthentication }), login);
-router.post("/signup", celebrate({ body: validateUserInfo }), createUser);
+router.post("/signin", validateAuthentication, login);
+router.post("/signup", validateUserInfo, createUser);
 
 router.use("/", items);
 router.use("/", users);
