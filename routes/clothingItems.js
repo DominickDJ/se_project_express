@@ -12,7 +12,10 @@ const {
   deleteItem,
 } = require("../controllers/clothingItems");
 
-const { validateClothingItem } = require("../middlewares/validation");
+const {
+  validateClothingItem,
+  validateItemID,
+} = require("../middlewares/validation");
 
 // Route to get all clothing items
 router.get("/items", getItems);
@@ -23,10 +26,22 @@ router.use(authMiddleware);
 router.post("/items", celebrate({ body: validateClothingItem }), createItem);
 
 // Route to delete a clothing item by _id
-router.delete("/items/:itemId", deleteItem);
+router.delete(
+  "/items/:itemId",
+  celebrate({ body: validateItemID }),
+  deleteItem,
+);
 
 // Likes
-router.put("/items/:itemId/likes", likeItem);
-router.delete("/items/:itemId/likes", dislikeItem);
+router.put(
+  "/items/:itemId/likes",
+  celebrate({ body: validateItemID }),
+  likeItem,
+);
+router.delete(
+  "/items/:itemId/likes",
+  celebrate({ body: validateItemID }),
+  dislikeItem,
+);
 
 module.exports = router;

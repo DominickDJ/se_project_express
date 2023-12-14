@@ -12,5 +12,10 @@ router.patch(
   celebrate({ body: validateProfileUpdate }),
   updateProfile,
 );
-
+router.get(
+  "/users/me",
+  authMiddleware,
+  celebrate({ body: validateProfileUpdate }),
+  updateProfile,
+);
 module.exports = router;

@@ -70,9 +70,7 @@ const likeItem = (req, res, next) => {
   )
     .orFail(() => {
       // If the item ID is not found, throw an error
-      const error = new Error("Item ID not found");
-      error.statusCode = NotFoundError;
-      throw error;
+      throw new NotFoundError("Item not found");
     })
     .then((updatedItem) => {
       // If the item is successfully updated, send the updated item as a response
@@ -80,8 +78,9 @@ const likeItem = (req, res, next) => {
     })
     .catch((error) => {
       if (error.name === "CastError") {
-        // If there is a casting error, send a bad request response
-        throw new BadRequestError("Invalid item ID");
+        next(new BadRequestError("Invalid item ID"));
+      } else {
+        next(error);
       }
       console.error(
         `Error ${error.name} with the message ${error.message} has occurred while executing the code`,
@@ -111,7 +110,9 @@ const dislikeItem = (req, res, next) => {
     })
     .catch((error) => {
       if (error.name === "CastError") {
-        throw new BadRequestError("Invalid item ID");
+        next(new BadRequestError("Invalid item ID"));
+      } else {
+        next(error);
       }
       console.error(
         `Error ${error.name} with the message ${error.message} has occurred while executing the code`,
